@@ -9,9 +9,6 @@ CREATE TABLE files(
 );
 COMMIT;
 
--- query: FileInsertOrReplaceMany
-INSERT OR REPLACE INTO files(name, path) VALUES ($1, $2) RETURNING id;
-
 -- query: FileInsertOrReplace
 INSERT OR REPLACE INTO files(name, path) VALUES($1, $2) RETURNING id;
 

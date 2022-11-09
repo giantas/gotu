@@ -14,12 +14,11 @@ import (
 var dbScript string
 
 var Q = sqload.MustLoadFromString[struct {
-	InitDb                  string `query:"InitDb"`
-	FileInsertOrReplace     string `query:"FileInsertOrReplace"`
-	FileInsertOrReplaceMany string `query:"FileInsertOrReplaceMany"`
-	FileDeleteOne           string `query:"FileDeleteOne"`
-	FileReadOne             string `query:"FileReadOne"`
-	FileReadMany            string `query:"FileReadMany"`
+	InitDb              string `query:"InitDb"`
+	FileInsertOrReplace string `query:"FileInsertOrReplace"`
+	FileDeleteOne       string `query:"FileDeleteOne"`
+	FileReadOne         string `query:"FileReadOne"`
+	FileReadMany        string `query:"FileReadMany"`
 }](dbScript)
 
 type StoreConfig struct {
@@ -54,7 +53,7 @@ func NewFileStore(conn *sql.DB) *FileStore {
 }
 
 func (store FileStore) createManyInTransaction(tx *sql.Tx, files []*File) error {
-	stmt, err := tx.Prepare(Q.FileInsertOrReplaceMany)
+	stmt, err := tx.Prepare(Q.FileInsertOrReplace)
 	if err != nil {
 		return err
 	}
