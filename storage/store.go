@@ -7,10 +7,20 @@ import (
 	_ "embed"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/midir99/sqload"
 )
 
 //go:embed db.sql
-var initScript string
+var dbScript string
+
+var Q = sqload.MustLoadFromString[struct {
+	InitDb                  string `query:"InitDb"`
+	FileInsertOrReplace     string `query:"FileInsertOrReplace"`
+	FileInsertOrReplaceMany string `query:"FileInsertOrReplaceMany"`
+	FileDeleteOne           string `query:"FileDeleteOne"`
+	FileReadOne             string `query:"FileReadOne"`
+	FileReadMany            string `query:"FileReadMany"`
+}](dbScript)
 
 type StoreConfig struct {
 	Init bool
@@ -28,7 +38,7 @@ func ConnectDatabase(cfg StoreConfig) (*sql.DB, error) {
 	}
 
 	if cfg.Init {
-		if _, err = db.Exec(initScript); err != nil {
+		if _, err = db.Exec(Q.InitDb); err != nil {
 			return db, err
 		}
 	}
@@ -44,7 +54,7 @@ func NewFileStore(conn *sql.DB) *FileStore {
 }
 
 func (store FileStore) createManyInTransaction(tx *sql.Tx, files []*File) error {
-	stmt, err := tx.Prepare("INSERT OR REPLACE INTO files(name, path) VALUES ($1, $2) RETURNING id")
+	stmt, err := tx.Prepare(Q.FileInsertOrReplaceMany)
 	if err != nil {
 		return err
 	}
@@ -76,13 +86,13 @@ func (store FileStore) CreateMany(files []*File) error {
 
 func (store FileStore) Create(file *File) error {
 	db := store.db
-	err := db.QueryRow("INSERT OR REPLACE INTO files(name, path) VALUES($1, $2) RETURNING id", file.Name, file.Path).Scan(&file.Id)
+	err := db.QueryRow(Q.FileInsertOrReplace, file.Name, file.Path).Scan(&file.Id)
 	return err
 }
 
 func (store FileStore) Delete(id int) error {
 	db := store.db
-	_, err := db.Exec("DELETE FROM files WHERE id = $1", id)
+	_, err := db.Exec(Q.FileDeleteOne, id)
 	return err
 }
 
@@ -90,7 +100,7 @@ func (store FileStore) Read(id int) (File, error) {
 	db := store.db
 	var file File
 	err := db.QueryRow(
-		"SELECT id, name, path FROM files WHERE id = $1", id,
+		Q.FileReadOne, id,
 	).Scan(&file.Id, &file.Name, &file.Path)
 	if err == sql.ErrNoRows {
 		return file, fmt.Errorf("no files with id '%d' found", id)
@@ -112,7 +122,7 @@ func (store FileStore) ReadMany(page int, pageSize int) ([]File, error) {
 	}
 
 	rows, err := db.Query(
-		"SELECT id, name, path FROM files ORDER BY id DESC LIMIT $1 OFFSET $2",
+		Q.FileReadMany,
 		limit, offset,
 	)
 	if err != nil {
