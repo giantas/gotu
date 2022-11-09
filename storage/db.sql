@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS files;
 CREATE TABLE files(
     id INTEGER NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
-    path TEXT NOT NULL
+    path TEXT NOT NULL,
+    UNIQUE(name, path)
 );
 COMMIT;

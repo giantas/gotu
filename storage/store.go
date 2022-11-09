@@ -44,7 +44,7 @@ func NewFileStore(conn *sql.DB) *FileStore {
 }
 
 func (store FileStore) createManyInTransaction(tx *sql.Tx, files []*File) error {
-	stmt, err := tx.Prepare("INSERT INTO files(name, path) VALUES ($1, $2) RETURNING id")
+	stmt, err := tx.Prepare("INSERT OR REPLACE INTO files(name, path) VALUES ($1, $2) RETURNING id")
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (store FileStore) CreateMany(files []*File) error {
 
 func (store FileStore) Create(file *File) error {
 	db := store.db
-	err := db.QueryRow("INSERT INTO files(name, path) VALUES($1, $2) RETURNING id", file.Name, file.Path).Scan(&file.Id)
+	err := db.QueryRow("INSERT OR REPLACE INTO files(name, path) VALUES($1, $2) RETURNING id", file.Name, file.Path).Scan(&file.Id)
 	return err
 }
 
