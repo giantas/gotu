@@ -32,15 +32,13 @@ func index(root string) ([]*storage.File, error) {
 	files := make([]*storage.File, 0)
 
 	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() {
+		if d.IsDir() && isHidden(path) {
+			return fs.SkipDir
+		} else if d.IsDir() {
 			return nil
 		}
 
 		if isHidden(path) {
-			if d.IsDir() {
-				return fs.SkipDir
-			}
-
 			return nil
 		}
 
